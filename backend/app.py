@@ -11,6 +11,9 @@ import json
 import re
 
 app = Flask(__name__)
+
+
+
 CORS(app, resources={
     r"/api/*": {
         "origins": ["http://localhost:3000"],
