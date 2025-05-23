@@ -16,11 +16,11 @@ class MongoDBConfig:
 
     # Direct connection string with explicit hosts
     # Note: This is a placeholder. If direct connection is needed, update with the correct server addresses from the new cluster
-    DIRECT_URI = 'mongodb+srv://kavin88701:mGmvb7QugKUb0O7z@cluster0.zik7il3.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+    DIRECT_URI = 'mongodb://kavin88701:mGmvb7QugKUb0O7z@ac-zm7hkzz-shard-00-00.zik7il3.mongodb.net:27017,ac-zm7hkzz-shard-00-01.zik7il3.mongodb.net:27017,ac-zm7hkzz-shard-00-02.zik7il3.mongodb.net:27017/?ssl=true&replicaSet=atlas-ixvlxl-shard-0&authSource=admin&retryWrites=true&w=majority'
 
     # Use environment variable to determine which connection to use
     # Options: 'local', 'atlas', 'direct'
-    CONNECTION_TYPE = os.environ.get('MONGODB_CONNECTION_TYPE', 'atlas')
+    CONNECTION_TYPE = os.environ.get('MONGODB_CONNECTION_TYPE', 'local')
 
     # Test database name for unit tests
     TEST_DB_NAME = 'test_db'
@@ -53,8 +53,9 @@ class JWTConfig:
 
 # File Upload Configuration
 class FileUploadConfig:
-    UPLOAD_FOLDER = 'uploads'
-    MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5MB max file size
+    # Use an absolute path for the upload folder
+    UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+    MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10MB max file size
 
 # CORS Configuration
 class CORSConfig:
