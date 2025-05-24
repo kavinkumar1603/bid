@@ -795,73 +795,19 @@ def get_item_bids(item_id):
     try:
         print(f"Fetching bids for item {item_id}")
 
-        # Find the bids
+        # Check if bids_collection is valid
+        if bids_collection is None:
+            print("Error: bids_collection is not initialized")
+            return jsonify({'error': 'Database connection error'}), 500
+
+        # Find bids for this item (simplified - only local MongoDB)
         try:
-            print(f"Querying bids for item_id: {item_id}")
+            item_obj_id = ObjectId(item_id)
+            print(f"Converted item_id to ObjectId: {item_obj_id}")
 
-            # Check if bids_collection is valid
-            if bids_collection is None:
-                print("Error: bids_collection is not initialized")
-                return jsonify({'error': 'Database connection error'}), 500
-
-            # List all collections to verify
-            collections = db.list_collection_names()
-            print(f"Available collections: {collections}")
-
-            # Count all bids in the collection
-            total_bids = bids_collection.count_documents({})
-            print(f"Total bids in collection: {total_bids}")
-
-            # Find bids for this item
-            try:
-                item_obj_id = ObjectId(item_id)
-                print(f"Converted item_id to ObjectId: {item_obj_id}")
-
-                # First check if any bids exist with this item_id in local MongoDB
-                count = bids_collection.count_documents({'item_id': item_obj_id})
-                print(f"Found {count} bids with item_id={item_obj_id} in local MongoDB")
-
-                # Get the bids from local MongoDB
-                local_bids = list(bids_collection.find({'item_id': item_obj_id}).sort('timestamp', -1))
-                print(f"Retrieved {len(local_bids)} bids for item {item_id} from local MongoDB")
-
-                # Try to get bids from MongoDB Atlas as well
-                atlas_bids = []
-                try:
-                    from atlas_connector import atlas
-                    print("Attempting to retrieve bids from MongoDB Atlas...")
-
-                    # Connect to Atlas
-                    if atlas.connect():
-                        # Get bids for this item
-                        atlas_bids = atlas.get_bids_for_item(item_id)
-                        print(f"Retrieved {len(atlas_bids)} bids for item {item_id} from MongoDB Atlas")
-                    else:
-                        print("Failed to connect to MongoDB Atlas")
-                except Exception as e:
-                    print(f"Error retrieving bids from MongoDB Atlas: {str(e)}")
-                    # Continue with local bids if Atlas retrieval fails
-
-                # Combine bids from both sources, removing duplicates
-                all_bids = local_bids.copy()
-
-                # Add Atlas bids that don't exist in local bids
-                local_bid_ids = [str(bid['_id']) for bid in local_bids]
-                for atlas_bid in atlas_bids:
-                    if atlas_bid['_id'] not in local_bid_ids:
-                        # Convert string IDs back to ObjectId for consistency
-                        atlas_bid['_id'] = ObjectId(atlas_bid['_id'])
-                        atlas_bid['user_id'] = ObjectId(atlas_bid['user_id'])
-                        atlas_bid['item_id'] = ObjectId(atlas_bid['item_id'])
-                        all_bids.append(atlas_bid)
-
-                # Sort combined bids by timestamp
-                bids = sorted(all_bids, key=lambda x: x['timestamp'], reverse=True)
-                print(f"Combined {len(bids)} bids from local MongoDB and MongoDB Atlas")
-
-            except Exception as e:
-                print(f"Error processing bids: {str(e)}")
-                return jsonify({'error': f'Error processing bids: {str(e)}'}), 400
+            # Get the bids from local MongoDB only
+            bids = list(bids_collection.find({'item_id': item_obj_id}).sort('timestamp', -1))
+            print(f"Retrieved {len(bids)} bids for item {item_id} from local MongoDB")
 
             # Print bid details for debugging
             for i, bid in enumerate(bids):
